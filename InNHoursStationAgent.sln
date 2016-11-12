@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "NHoursStationAgent", "src\NHorusTrainAgent\NHoursStationAgent.fsproj", "{000B22AF-7B1D-4BD2-A4D4-D901C193CC44}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "paket", "paket", "{59AAD3C7-B771-4BED-8425-3A45C01D46A5}"
+	ProjectSection(SolutionItems) = preProject
+		paket.dependencies = paket.dependencies
+		paket.lock = paket.lock
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "other", "other", "{54CC9AE1-3E47-4B9B-8591-DB5AD38C275A}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{18DD3629-75F2-45D5-9DAB-DB7B65989006}"
+	ProjectSection(SolutionItems) = preProject
+		build.cmd = build.cmd
+		build.fsx = build.fsx
+		build.sh = build.sh
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{000B22AF-7B1D-4BD2-A4D4-D901C193CC44}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{000B22AF-7B1D-4BD2-A4D4-D901C193CC44}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{000B22AF-7B1D-4BD2-A4D4-D901C193CC44}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{000B22AF-7B1D-4BD2-A4D4-D901C193CC44}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
