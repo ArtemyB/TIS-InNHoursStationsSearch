@@ -4,8 +4,14 @@
 open Fake
 
 // Directories
-let buildDir  = "./build/"
-let deployDir = "./deploy/"
+
+let scMachineDir = @"D:/Study/Univer/OSTIS/ostis/sc-machine"
+
+let defaultBuildDir  = "./build/"
+let defaultDeployDir = "./deploy/"
+
+let buildDir = scMachineDir </> "bin/netextensions/debug"
+let deployDir = scMachineDir </> "bin/netextensions"
 
 
 // Filesets

@@ -9,25 +9,28 @@ open ScEngineNet.LinkContent
 open FSharpx
 open FSharpx.Option
 
-
-type RoutePoint = {
-    Id          : string
+type RoutePointInfo = {
+    Station     : ScNode
+    CheckPoint  : ScNode
     Departure   : TimeSpan
     Arrival     : TimeSpan
 }
+
+type RwStation = ScNode
+type RwCheckPoint = ScNode
 
     
 
 type KbTraverse(ctx :ScMemoryContext) =
     
-    let stations = System.Collections.Generic.List<RoutePoint>()
+    let stations = System.Collections.Generic.List<RoutePointInfo>()
 
     let node idStr =
         ctx.FindNode(Identifier(idStr)) :> ScElement    
 
 
     let tryValue (root :ScElement) =
-        (ScTypes.NodeConstant ==> root) |<- (Nrel (node "nrel_value"))
+        (ScTypes.NodeConstant ==> root) |<- (Nrel (node KbIds.nrelValue))
         |> ctx.CreateIterator
         |> Seq.head
         |> tryGetNode 0
@@ -41,11 +44,11 @@ type KbTraverse(ctx :ScMemoryContext) =
                     let! lContent = Seq.head itr
                                     |> tryGetElement 2
                                     >>= tryFetchLinkContent
-                    let v = lContent :?> ScInt32
-                    return v.Value
+                    let v = lContent |> ScLinkContent.ToInt32
+                    return v
                 }
-        let tryGetHours = tryGetTimeUnits "rrel_hours"
-        let tryGetMinutes = tryGetTimeUnits "rrel_minutes"
+        let tryGetHours = tryGetTimeUnits KbIds.rrelHours
+        let tryGetMinutes = tryGetTimeUnits KbIds.rrelMinutes
         
         maybe {
             let! h_min = tryValue time
@@ -55,54 +58,102 @@ type KbTraverse(ctx :ScMemoryContext) =
         }
 
 
-    let tryTime (timeId :string) (checkPoint :ScNode) =
+    let tryTime (timeId :string) (checkPoint :RwCheckPoint) =
         (checkPoint ==> ScTypes.NodeConstant) |<- (Nrel (node timeId))
         |> ctx.CreateIterator
         |> Seq.head
         |> tryGetNode 2
         
-    let tryDepartureTime = tryTime "nrel_departure_time"
-    let tryArrivalTime = tryTime "nrel_arrival_time"
+    let tryDepartureTime = tryTime KbIds.nrelDepartureTime
+    let tryArrivalTime = tryTime KbIds.nrelArrivalTime
 
 
-    let getRwCheckPoints (station :ScNode) =
-        (ScTypes.NodeConstant ==> station) |<- (Nrel (node "nrel_rw_station"))
-        |> ctx.CreateIterator
-        |> Seq.map (tryGetNode 0)
-        |> Seq.filter Option.isSome
-        |> Seq.map Option.get
-    
-    let isRwRouteCheckPoint (x :ScNode) =
-        (node "concept_rw_route_check_point" --> x)
-        |> ctx.CreateIterator
-        |> (Seq.isEmpty >> not)
-    
-    let tryGetNextPoint (root :ScElement) =
-        (root ==> ScTypes.NodeConstant) |<- (Nrel (node "nrel_next_point"))
+    let getChPointStation (chPoint :RwCheckPoint) =
+        (chPoint ==> ScTypes.NodeConstant) |<- (Nrel (node KbIds.nrelRwStation))
         |> ctx.CreateIterator
         |> Seq.head
         |> tryGetNode 2
 
 
-    let getRoutePoint (station :ScNode) (chPoint :ScNode) =
+    let getRoutePointInfo (chPoint :RwCheckPoint) =
         maybe {
+            let! station = getChPointStation chPoint
             let! departure = tryDepartureTime chPoint
                                 >>= tryGetTime
             let! arrival = tryArrivalTime chPoint
                                 >>= tryGetTime
-            return { Id = station.SystemIdentifier.Value
+            return { Station = station
+                     CheckPoint = chPoint
                      Departure = departure;
                      Arrival = arrival }
         }
+    
 
-    let findStations (station :ScNode) (departure :TimeSpan) (hours :int) =
+    let getRwCheckPoints (station :RwStation) =
+        (ScTypes.NodeConstant ==> station) |<- (Nrel (node KbIds.nrelRwStation))
+        |> ctx.CreateIterator
+        |> Seq.choose (tryGetNode 0)
+    
+    let isRwRouteCheckPoint (x :ScNode) =
+        (node KbIds.conceptRwRouteCheckPoint --> x)
+        |> ctx.CreateIterator
+        |> (Seq.isEmpty >> not)
+    
+    let tryGetNextPoint (chPoint :RwCheckPoint) =
+        (chPoint ==> ScTypes.NodeConstant) |<- (Nrel (node KbIds.nrelNextPoint))
+        |> ctx.CreateIterator
+        |> Seq.head
+        |> tryGetNode 2
+
+    let tryGetNextChPointStation (chPoint :RwCheckPoint) =
+        tryGetNextPoint chPoint
+        >>= getChPointStation
+
+    let getNearbyStations (station :RwStation) :RwStation seq =
+        station
+        |> getRwCheckPoints
+        |> Seq.choose tryGetNextChPointStation
+    
+
+    let getAllReachableStations (start :RwStation) =
+        
+        let rec traverse (current :RwStation seq) (passed :RwStation seq) =
+            if Seq.isEmpty current then
+                passed
+            else
+                let nexts = current
+                            |> Seq.collect getNearbyStations
+                            |> Seq.distinct
+                let passed' = passed |> Seq.append current                               
+                traverse nexts passed'
+
+        traverse (Seq.singleton start) (Seq.empty)
+    
+
+    let findStationsByTime (startStation :RwStation) (departure :TimeSpan) (hours :int) =
         let maxTime = departure + TimeSpan(hours, 0, 0)
 
-        getRwCheckPoints station
-        |> Seq.map (getRoutePoint station)
-        |> Seq.filter Option.isSome
-        |> Seq.map Option.get
+        let timeCheck (routePoint :RoutePointInfo) =
+            routePoint.Arrival <= maxTime
         
+        let rec traverse (current :RoutePointInfo seq) (passed :RoutePointInfo seq) =
+            if Seq.isEmpty current then passed
+            else
+                let nexts = current
+                            |> Seq.distinctBy (fun x -> x.CheckPoint)
+                            |> Seq.filter timeCheck
+                let passed' = passed |> Seq.append current
+                traverse nexts passed'
+
+        let starts = startStation
+                        |> getRwCheckPoints
+                        |> Seq.choose getRoutePointInfo
+
+        let result = traverse starts Seq.empty
+        
+        result |> Seq.map (fun x -> x.Station)
+        
+
 
         
 let initializeScMemory () =
