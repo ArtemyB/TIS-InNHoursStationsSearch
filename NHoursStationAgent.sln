@@ -23,6 +23,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{18DD3629
 		build.sh = build.sh
 	EndProjectSection
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "NHoursStationAgent.Launcher", "src\NHoursStationAgent.Launcher\NHoursStationAgent.Launcher.fsproj", "{C47F1AE2-3462-4F6C-AD59-7E611C3A1CDD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{000B22AF-7B1D-4BD2-A4D4-D901C193CC44}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{000B22AF-7B1D-4BD2-A4D4-D901C193CC44}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{000B22AF-7B1D-4BD2-A4D4-D901C193CC44}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C47F1AE2-3462-4F6C-AD59-7E611C3A1CDD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C47F1AE2-3462-4F6C-AD59-7E611C3A1CDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C47F1AE2-3462-4F6C-AD59-7E611C3A1CDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C47F1AE2-3462-4F6C-AD59-7E611C3A1CDD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,16 +1,6 @@
 ﻿[<AutoOpen>]
 module Globals
 
-open Fake.EnvironmentHelper
-
-module Config =
-
-    let ScMachineFolder = @"D:\Study\Univer\OSTIS\ostis\sc-machine"
-
-    let ConfigFilePath = ScMachineFolder </> "bin/sc-memory.ini"
-    let RepoPath = ScMachineFolder </> "bin/repo"
-    let ExtensionPath = ScMachineFolder </> "bin/extensions"
-    let NetExtensionPath = ""
 
 module KbIds =
     let nrelRwStation = "nrel_rw_station"

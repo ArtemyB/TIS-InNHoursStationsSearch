@@ -248,12 +248,3 @@ type RwStationSearchAgent() =
             do ctx.Dispose()
             ScResult.SC_RESULT_OK
 
-        
-let initializeScMemory () =
-    let parameters = ScMemoryParams(true,
-                        configFile = Config.ConfigFilePath,
-                        repoPath = Config.RepoPath,
-                        extensionsPath = Config.ExtensionPath,
-                        netExtensionsPath = Config.NetExtensionPath)
-    if (not ScMemory.IsInitialized)
-        then ScMemory.Initialize(parameters)
