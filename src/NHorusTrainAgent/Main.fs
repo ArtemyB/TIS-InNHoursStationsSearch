@@ -1,13 +1,17 @@
 module NHorusTrainAgent
 
 open System
-open ScEngineNet.Extras
 open ScEngineNet
+open ScEngineNet.ExtensionsNet
+open ScEngineNet.Extras
 open ScEngineNet.ScElements
-open ScMemoryNet
 open ScEngineNet.LinkContent
+open ScMemoryNet
 open FSharpx
-open FSharpx.Option
+open FSharpx
+open FSharpPlus
+
+let maybe = FSharpx.Option.maybe
 
 type RoutePointInfo = {
     Station     : ScNode
@@ -18,17 +22,14 @@ type RoutePointInfo = {
 
 type RwStation = ScNode
 type RwCheckPoint = ScNode
-
     
 
-type KbTraverse(ctx :ScMemoryContext) =
-    
-    let stations = System.Collections.Generic.List<RoutePointInfo>()
+type RwStationsSearch(ctx :ScMemoryContext) =
 
     let node idStr =
-        ctx.FindNode(Identifier(idStr)) :> ScElement    
+        ctx.FindNode(Identifier(idStr))
 
-
+    
     let tryValue (root :ScElement) =
         (ScTypes.NodeConstant ==> root) |<- (Nrel (node KbIds.nrelValue))
         |> ctx.CreateIterator
@@ -41,9 +42,8 @@ type KbTraverse(ctx :ScMemoryContext) =
             (root --> ScTypes.Link) |<- (Rrel (node rrelId))
             |> ctx.CreateIterator
             |> fun itr -> maybe {
-                    let! lContent = Seq.head itr
-                                    |> tryGetElement 2
-                                    >>= tryFetchLinkContent
+                    let! link = Seq.head itr |> tryGetElement 2
+                    let! lContent = tryFetchLinkContent link
                     let v = lContent |> ScLinkContent.ToInt32
                     return v
                 }
@@ -79,9 +79,9 @@ type KbTraverse(ctx :ScMemoryContext) =
         maybe {
             let! station = getChPointStation chPoint
             let! departure = tryDepartureTime chPoint
-                                >>= tryGetTime
+                             >>= tryGetTime
             let! arrival = tryArrivalTime chPoint
-                                >>= tryGetTime
+                           >>= tryGetTime
             return { Station = station
                      CheckPoint = chPoint
                      Departure = departure;
@@ -152,8 +152,101 @@ type KbTraverse(ctx :ScMemoryContext) =
         let result = traverse starts Seq.empty
         
         result |> Seq.map (fun x -> x.Station)
-        
 
+    
+    member self.FindStationsByTime (start, departureTime, hours) =
+        findStationsByTime start departureTime hours
+
+
+
+type RwStationSearchAgent() =
+    
+    let agentName = "nHoursAwayStationsSearchAgent"
+
+    let mutable ctx :ScMemoryContext = null
+
+
+    let node idStr =
+        ctx.FindNode(Identifier(idStr))
+
+
+    let writeResultToScMemory (stations :RwStation seq) =
+        let resultNodeId =
+            agentName + "_Result_" + (
+                DateTime.Now.ToString()
+                |> String.splitChar [| ' '; ':'; '/'; '.' |]
+                |> String.Concat)
+            |> Identifier
+        use resultNode = ctx.CreateNode(ScTypes.NodeConstant, resultNodeId)
+        do  stations
+            |> Seq.iter (fun st ->
+                    ctx.CreateArc(resultNode, st, ScTypes.ArcAccessConstantPositivePermanent)
+                    |> ignore
+                )
+
+    let fetchparams (paramsNode :ScNode) = maybe {
+        let! root =
+            (ScTypes.NodeConstant --> paramsNode) |<- (Nrel (node KbIds.nrelTupleOfParams))
+            |> ctx.CreateIterator
+            |> Seq.head
+            |> tryGetNode 0
+
+        let fetchParamValue id castF =
+            (root --> ScTypes.Link) |<- (Rrel (node id))
+            |> ctx.CreateIterator
+            |> Seq.head
+            |> tryGetNode 2
+            >>= tryFetchLinkContent
+            |> Option.map castF
+
+        let! station = maybe {
+            let! idStr =
+                fetchParamValue KbIds.rrelParamStation ScLinkContent.ToStr
+            let id = Identifier(idStr)
+            return ctx.FindNode(id)
+        }
+        let! hours =
+            fetchParamValue KbIds.rrelParamHours ScLinkContent.ToInt32
+        let! departureTime =
+            fetchParamValue KbIds.rrelParamDeparture ScLinkContent.ToStr
+            >>= Option.tryParseWith TimeSpan.TryParse
+
+        return (station, departureTime, hours)
+    }
+        
+    interface IScExtensionNet with
+        
+        member self.NetExtensionName
+            with get() = agentName
+        member self.NetExtensionDescription
+            with get() = "Агент поиска станций, находящихся в N часах езды от текущей"
+        
+        member self.Initialize() =
+            ctx <- new ScMemoryContext(ScAccessLevels.MinLevel)
+
+            use agentNode = node agentName
+
+            let core = RwStationsSearch(ctx)
+
+            agentNode.OutputArcAdded.Add(fun args ->
+                maybe {
+                    let out = args.Arc.EndElement
+                    let! paramsNode =
+                        if out.ElementType = ScTypes.NodeConstant
+                        then Some (out :?> ScNode)
+                        else None
+                    let! agentParams = fetchparams paramsNode
+                    do  core.FindStationsByTime agentParams
+                        |> writeResultToScMemory
+                    return ()
+                } |> ignore
+            )
+            
+            ScResult.SC_RESULT_OK
+
+        member self.ShutDown() =
+            do ctx.Dispose()
+            ScResult.SC_RESULT_OK
 
         
 let initializeScMemory () =
@@ -164,13 +257,3 @@ let initializeScMemory () =
                         netExtensionsPath = Config.NetExtensionPath)
     if (not ScMemory.IsInitialized)
         then ScMemory.Initialize(parameters)
-
-
-
-[<EntryPoint>]
-let main argv =
-    
-    use ctx = new ScMemoryContext(ScAccessLevels.MinLevel)
-
-    printfn "%A" argv
-    0 // return an integer exit code

@@ -35,10 +35,8 @@ let inline (|<-) (c3 :El3<'a,'b>) (rel :Relation) =
 open FSharpx
 open FSharpx.Option
 
-
 let tryGetElement i (constr :ScConstruction) =
     constr
-    //|> Seq.head
     |> fun x -> x.[i]
     |> fun x -> if x.IsValid then Some x else None
 
@@ -47,6 +45,7 @@ let tryGetNode i constr =
     tryGetElement i constr
     >>= function    | :? ScNode as n -> Some n
                     | _ -> None
+
     
 let tryFetchLinkContent (element :ScElement) =
     maybe {
@@ -55,3 +54,11 @@ let tryFetchLinkContent (element :ScElement) =
                     | _ -> None
         return link.LinkContent
     }
+
+open ScEngineNet.LinkContent
+
+type ScLinkContent with
+    
+    static member ToStr (linkContent :ScLinkContent) =
+        ScLinkContent.ToString linkContent.Bytes
+      

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "NHoursStationAgent", "src\NHorusTrainAgent\NHoursStationAgent.fsproj", "{000B22AF-7B1D-4BD2-A4D4-D901C193CC44}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "NHoursStationAgent", "src\NHorusTrainAgent\NHoursStationAgent.fsproj", "{000B22AF-7B1D-4BD2-A4D4-D901C193CC44}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "paket", "paket", "{59AAD3C7-B771-4BED-8425-3A45C01D46A5}"
 	ProjectSection(SolutionItems) = preProject
