@@ -10,13 +10,12 @@ let scMachineDir = @"D:/Study/Univer/OSTIS/ostis/sc-machine"
 let defaultBuildDir  = "./build/"
 let deployDir = "./deploy/"
 
-let buildDir = scMachineDir </> "bin/netextensions/debug"
+let buildDir = scMachineDir </> "bin/netextensions/nHoursTrainAgent/debug"
 
 
 // Filesets
 let appReferences  =
-    !! "/**/*.csproj"
-    ++ "/**/*.fsproj"
+    !! "/src/NHorusTrainAgent/*.fsproj"
 
 // version info
 let version = "0.1"  // or retrieve from CI server

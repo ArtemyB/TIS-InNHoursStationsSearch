@@ -1,5 +1,6 @@
 source https://www.nuget.org/api/v2
 nuget FAKE
 nuget FSharp.Core
+nuget FsControl 1.0.9
 nuget FSharpx.Extras
 nuget FSharpPlus

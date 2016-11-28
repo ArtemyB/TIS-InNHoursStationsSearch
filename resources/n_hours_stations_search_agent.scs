@@ -1,0 +1,74 @@
+sc_net_agent
+    => nrel_main_idtf:
+		[SC-.NET-agent](*<- lang_en;;*);
+		[SC-.NET-агент](*<- lang_ru;;*);;
+
+sc_net_agent_params
+    => nrel_main_idtf:
+		[SC-.NET-agent parameters](*<- lang_en;;*);
+		[Параметры SC-.NET-агента](*<- lang_ru;;*);;
+
+nrel_tuple_of_params
+	<- sc_node_norole_relation;
+	<- sc_type_norole_relation;
+	<- binary_relation;
+	=> nrel_main_idtf:
+		[Tuple of parameters*](*<- lang_en;;*);
+		[Кортеж параметров*](*<- lang_ru;;*);
+	=> nrel_second_domain: sc_net_agent_params;;
+
+nrel_sc_net_agent_params
+	<- sc_node_norole_relation;
+	<- sc_type_norole_relation;
+	<- binary_relation;
+	=> nrel_main_idtf:
+		[SC-.NET-agent parameters*](*<- lang_en;;*);
+		[Параметры SC-.NET-агента*](*<- lang_ru;;*);
+	=> nrel_first_domain: sc_net_agent;
+	=> nrel_second_domain: sc_net_agent_params;;
+
+sc_net_agent_result
+    => nrel_main_idtf:
+		[SC-.NET-agent work result](*<- lang_en;;*);
+		[Результат работы SC-.NET-агента](*<- lang_ru;;*);;
+
+nrel_sc_net_agent_result
+    => nrel_main_idtf:
+		[SC-.NET-agent work result*](*<- lang_en;;*);
+		[Результат работы SC-.NET-агента*](*<- lang_ru;;*);
+    <- sc_node_norole_relation;
+	<- sc_type_norole_relation;
+	<- binary_relation;
+    => nrel_first_domain: sc_net_agent;
+    => nrel_second_domain: sc_net_agent_result;;
+
+
+rrel_param_departure
+	<- sc_node_role_relation;
+	<- sc_type_role_relation;
+	<- binary_relation;
+	=> nrel_main_idtf:
+		[Parameter "Departure time"'](*<- lang_en;;*);
+		[Параметр "Время отправления"'](*<- lang_ru;;*);;
+
+rrel_param_hours
+	<- sc_node_role_relation;
+	<- sc_type_role_relation;
+	<- binary_relation;
+	=> nrel_main_idtf:
+		[Parameter "Number of hours"'](*<- lang_en;;*);
+		[Параметр "Количество часов"'](*<- lang_ru;;*);;
+
+rrel_param_station
+	<- sc_node_role_relation;
+	<- sc_type_role_relation;
+	<- binary_relation;
+	=> nrel_main_idtf:
+		[Parameter "Departure station"'](*<- lang_en;;*);
+		[Параметр "Станция отправления"'](*<- lang_ru;;*);;
+
+nHoursAwayStationsSearchAgent
+    => nrel_main_idtf:
+		[N hours away stations search agent](*<- lang_en;;*);
+		[Агент поиска станций в N часах езды](*<- lang_ru;;*);
+	<- sc_net_agent;;
