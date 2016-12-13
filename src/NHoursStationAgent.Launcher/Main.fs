@@ -1,11 +1,9 @@
 ﻿module Config =
 
-    open Fake.EnvironmentHelper
-
     let ScMachineFolder = @"D:/Study/Univer/OSTIS/ostis/sc-machine/"
 
     let ConfigFilePath   = ScMachineFolder + "bin/sc-memory.ini.example"
-    let RepoPath         = ScMachineFolder + "bin/repo"
+    let RepoPath         = ScMachineFolder + "../kb.bin"
     let ExtensionPath    = ScMachineFolder + "bin/extensions"
     let NetExtensionPath = ScMachineFolder + "bin/netextensions"
 
@@ -18,7 +16,7 @@ module KbIds =
     let nrelNetAgentParams     = "nrel_sc_net_agent_params"
     let nrelTupleOfParams      = "nrel_tuple_of_params"
     let scNetAgent             = "sc_net_agent"
-    let nrelNetAgentResult     ="nrel_sc_net_agent_result"
+    let nrelNetAgentResult     = "nrel_sc_net_agent_result"
     let nHoursStationAgentName = "nHoursAwayStationsSearchAgent"
 
 
@@ -27,9 +25,10 @@ open FSharpx
 open ScMemoryNet
 open ScEngineNet.ScElements
 open ScEngineNet.LinkContent
+open System.Diagnostics
 
 let initializeScMemory () =
-    let parameters = ScMemoryParams(true,
+    let parameters = ScMemoryParams(false,
                         configFile        = Config.ConfigFilePath,
                         repoPath          = Config.RepoPath,
                         extensionsPath    = Config.ExtensionPath,
@@ -37,11 +36,13 @@ let initializeScMemory () =
     if (not ScMemory.IsInitialized)
         then ScMemory.Initialize(parameters)
 
+//let choice = Choice.EitherBuilder()
 
 [<EntryPoint>]
 let main argv = 
     do initializeScMemory()
-    use ctx = new ScMemoryContext(ScAccessLevels.MinLevel)
+    printfn "SC-memory initialized%b" ScMemory.IsInitialized
+    let ctx = new ScMemoryContext(ScAccessLevels.MinLevel)
 
     let node id = ctx.FindNode (Identifier id)
 
@@ -57,7 +58,7 @@ let main argv =
 
         use stationLc = new ScString (station)
         use depTimeLc = new ScString (departureTime.ToString())
-        use hoursLc = new ScInt32 (hours)
+        use hoursLc = new ScString (hours.ToString())
 
         use stationNode = ctx.CreateLink (stationLc)
         use depTimeNode = ctx.CreateLink (depTimeLc)
@@ -76,7 +77,7 @@ let main argv =
             ] |> addRolesTo root
 
         let paramsNode = ctx.CreateNode (ScTypes.NodeConstant)
-        use paramsArc = ctx.CreateArc (root, paramsNode, ScTypes.ArcCommon)
+        use paramsArc = ctx.CreateArc (root, paramsNode, ScTypes.ArcCommonConstant)
         use nrelTupleOfParams = node KbIds.nrelTupleOfParams
         use nrelTupleOfParamsArc = ctx.CreateArc (nrelTupleOfParams, paramsArc, ScTypes.ArcAccessConstantPositivePermanent)
 
@@ -96,17 +97,25 @@ let main argv =
         match (depTime, hours) with
         | ((true, dt), (true, h)) ->
             use agentNode = node KbIds.nHoursStationAgentName
-            use paramsNode = setParams stationId dt h
-            use paramsArc = agentNode.AddOutputArc (paramsNode, ScTypes.ArcCommon)
-            printfn "Params created. Agent should start doing its task."
+            //use paramsNode = setParams stationId dt h
+            //use paramsArc = agentNode.AddOutputArc (paramsNode, ScTypes.ArcCommonConstant)
+            let rwSearch = NHorusTrainAgent.RwStationsSearch ctx
+            printfn "Matching items:"
+            let stations = rwSearch.FindStationsByTime (node stationId, dt, h)
+            stations |> Seq.toList |> List.iter (fun x -> printfn "%s" x.SystemIdentifier.Value)
+            //printfn "Params created. Agent should start doing its task."
 
         | _ ->
             printfn "Invalid input. Try again."
             inputLoop ()
     
-    inputLoop()
+    try inputLoop() with
+    | :? NullReferenceException as ex ->
+        printfn "Exception %s" ex.StackTrace
 
     ignore <| Console.ReadKey()
+
+    ctx.Dispose()
 
     if ScMemory.IsInitialized
     then ignore <| ScMemory.ShutDown(true)
