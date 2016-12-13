@@ -31,7 +31,7 @@ type RwStationsSearch(ctx :ScMemoryContext) =
 
     
     let tryValue (root :ScElement) =
-        (ScTypes.NodeConstant ==> root) |<- (Nrel (node KbIds.nrelValue))
+        (ScTypes.NodeConstant ==> root) |<- (node KbIds.nrelValue)
         |> ctx.CreateIterator
         |> Seq.head
         |> tryGetNode 0
@@ -39,7 +39,7 @@ type RwStationsSearch(ctx :ScMemoryContext) =
 
     let tryGetTime (time :ScNode) =
         let tryGetTimeUnits rrelId (root :ScElement) =
-            (root --> ScTypes.Link) |<- (Rrel (node rrelId))
+            (root --> ScTypes.Link) |<- (node rrelId)
             |> ctx.CreateIterator
             |> fun itr -> maybe {
                     let! link = Seq.head itr |> tryGetElement 2
@@ -59,17 +59,17 @@ type RwStationsSearch(ctx :ScMemoryContext) =
 
 
     let tryTime (timeId :string) (checkPoint :RwCheckPoint) =
-        (checkPoint ==> ScTypes.NodeConstant) |<- (Nrel (node timeId))
+        (checkPoint ==> ScTypes.NodeConstant) |<- (node timeId)
         |> ctx.CreateIterator
-        |> Seq.head
-        |> tryGetNode 2
+        |> Seq.tryHead
+        >>= tryGetNode 2
         
     let tryDepartureTime = tryTime KbIds.nrelDepartureTime
     let tryArrivalTime = tryTime KbIds.nrelArrivalTime
 
 
     let getChPointStation (chPoint :RwCheckPoint) =
-        (chPoint ==> ScTypes.NodeConstant) |<- (Nrel (node KbIds.nrelRwStation))
+        (chPoint ==> ScTypes.NodeConstant) |<- (node KbIds.nrelRwStation)
         |> ctx.CreateIterator
         |> Seq.head
         |> tryGetNode 2
@@ -90,7 +90,7 @@ type RwStationsSearch(ctx :ScMemoryContext) =
     
 
     let getRwCheckPoints (station :RwStation) =
-        (ScTypes.NodeConstant ==> station) |<- (Nrel (node KbIds.nrelRwStation))
+        (ScTypes.NodeConstant ==> station) |<- (node KbIds.nrelRwStation)
         |> ctx.CreateIterator
         |> Seq.choose (tryGetNode 0)
     
@@ -100,7 +100,7 @@ type RwStationsSearch(ctx :ScMemoryContext) =
         |> (Seq.isEmpty >> not)
     
     let tryGetNextPoint (chPoint :RwCheckPoint) =
-        (chPoint ==> ScTypes.NodeConstant) |<- (Nrel (node KbIds.nrelNextPoint))
+        (chPoint ==> ScTypes.NodeConstant) |<- (node KbIds.nrelNextPoint)
         |> ctx.CreateIterator
         |> Seq.head
         |> tryGetNode 2
@@ -186,13 +186,13 @@ type RwStationSearchAgent() =
 
     let fetchparams (paramsNode :ScNode) = maybe {
         let! root =
-            (ScTypes.NodeConstant --> paramsNode) |<- (Nrel (node KbIds.nrelTupleOfParams))
+            (ScTypes.NodeConstant --> paramsNode) |<- (node KbIds.nrelTupleOfParams)
             |> ctx.CreateIterator
             |> Seq.head
             |> tryGetNode 0
 
         let fetchParamValue id castF =
-            (root --> ScTypes.Link) |<- (Rrel (node id))
+            (root --> ScTypes.Link) |<- (node id)
             |> ctx.CreateIterator
             |> Seq.head
             |> tryGetNode 2
@@ -206,7 +206,8 @@ type RwStationSearchAgent() =
             return ctx.FindNode(id)
         }
         let! hours =
-            fetchParamValue KbIds.rrelParamHours ScLinkContent.ToInt32
+            fetchParamValue KbIds.rrelParamHours ScLinkContent.ToStr
+            >>= Option.tryParseWith Int32.TryParse
         let! departureTime =
             fetchParamValue KbIds.rrelParamDeparture ScLinkContent.ToStr
             >>= Option.tryParseWith TimeSpan.TryParse

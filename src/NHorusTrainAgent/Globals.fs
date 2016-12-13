@@ -5,7 +5,7 @@ module Globals
 module KbIds =
     let nrelRwStation = "nrel_rw_station"
     let nrelArrivalTime = "nrel_arrival_time"
-    let nrelDepartureTime = "nreL_departure_time"
+    let nrelDepartureTime = "nrel_departure_time"
     let nrelValue = "nrel_value"
     let rrelHours = "rrel_hours"
     let rrelMinutes = "rrel_minutes"
